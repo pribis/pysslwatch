@@ -73,7 +73,7 @@ def send_mail(msg_bundle):
 
     body += "\n\nThanks!  IT Dept.\n\n\n"
     if debug_level > 1:
-        print body
+        print(body)
     else:
         msg = MIMEText(body)
         msg['Subject'] = "Boxcar SSL Certificate Report"
