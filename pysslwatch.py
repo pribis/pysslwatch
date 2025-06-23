@@ -81,6 +81,7 @@ def send_mail(msg_bundle):
         msg['From'] = from_email
         s = smtplib.SMTP('localhost')
         s.sendmail(from_email, [alert_email], msg.as_string())
+        s.quit()
     
 def get_cert_info(host):
     out = subprocess.check_output("echo | "+OPENSSL+" s_client -showcerts -servername "+host+" -connect "+host+":443 2>/dev/null | "+OPENSSL+" x509 -inform pem -noout -enddate -issuer", shell=True)
