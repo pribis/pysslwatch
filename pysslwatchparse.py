@@ -1,34 +1,52 @@
-import nginxparser
+import nginxparser_eb
 import os
+import glob
 
 file_path = '/etc/nginx/conf.d/bellastationery.com.conf'
-domains = []
-class sslwatchparse:
-    confLocDef = '/etc/nginx/conf.d'
+
+class SSLWatchParse:
+    domains = []
+    confLocDefault = '/etc/nginx/conf.d'
     #Go trough all conf files, grabbing up domains
     #This assumes all domains are https.
     #Pass the location of your confs.  Default is /etc/nginx/conf.d
-    def getDomains(confLocation):
+    def getDomains(self):
         try:
-            with open(file_path, 'r') as f:
-                parsed_content = nginxparser.loads(f.read())
+            for f in os.listdir(self.confLocDefault):
+                if f == '.' or f =='..':
+                    continue
 
-            for block in parsed_content:
-                if block[0] == 'server':
-                    for item in block:
-                        if isinstance(item, list) and item[0] == 'server_name':
-                            domains.extend(item[1].split())
-            print("Extracted Domains:", domains)
+                with open(self.confLocDefault+'/'+f, 'r') as fh:
+                    parsed_content = nginxparser_eb.load(fh)
+                for block in parsed_content:
+                    if block[1][0][0] == 'server_name':
+                        domain_names = block[1][0][1].split()
+                        [self.domains.append(d) for d in domain_names]
+                        
+
         except FileNotFoundError:
             print(f"Error: File not found at {file_path}")
         except Exception as e:
             print(f"An error occurred: {e}")
-    
 
+            
+        return self.cleanup(self.domains, True)
+    def removeDups():
+        pass
 
     #Remove dups and, if specified, remove www.
-    def cleanup(makenaked=True):
-        pass
+    def cleanup(self, domains, makenaked=True):
+        new_domains = []
+
+        for d in domains:
+            old_domains = d.split('.')
+            if old_domains[0] == 'www':
+                new_domains.append('.'.join(old_domains[1:]))
+            else:
+                new_domains.append(d)
+                
+
+        return list(set(new_domains))
 
     
     
