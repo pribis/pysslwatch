@@ -15,6 +15,12 @@ critical = 10 #days
 debug_level = 1 #0=nothing; >0 messages to STDOUT
 alert_email = "brian.pribis@boxcarpress.com"
 from_email = "ssl_alert@boxcarpress.com"
+ignore_confs = [
+    'stage2.boxcarpress.us',
+    'parked.conf',
+    'boxcarpress.us',
+    'harold.sugar.bxp.cc',
+    ]
 
 def send_mail(msg_bundle):
     body = "Hey there!  Here's a report on your SSL certs.\n\n\n"
@@ -102,6 +108,6 @@ if __name__ == "__main__":
         main([sys.argv[1]])
     else:
         parse = pysslwatchparse.SSLWatchParse()
-        domains = parse.getDomains()
+        domains = parse.getDomains(ignore_confs)
         main(domains)
         
