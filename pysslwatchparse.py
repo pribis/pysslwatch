@@ -1,27 +1,29 @@
 import nginxparser_eb
 import os
 import glob
+import re
 
 file_path = '/etc/nginx/conf.d/bellastationery.com.conf'
-
 class SSLWatchParse:
     domains = []
-    confLocDefault = '/etc/nginx/conf.d'
+    #confLocDefault = '/etc/nginx/conf.d'
+    confLocDefault = 'certs'
     #Go trough all conf files, grabbing up domains
     #This assumes all domains are https.
     #Pass the location of your confs.  Default is /etc/nginx/conf.d
     def getDomains(self):
+        pattern = re.compile(r'\s*(server_name\s+.+)\s*;')
         try:
             for f in os.listdir(self.confLocDefault):
                 if f == '.' or f =='..':
                     continue
-
+                
                 with open(self.confLocDefault+'/'+f, 'r') as fh:
-                    parsed_content = nginxparser_eb.load(fh)
-                for block in parsed_content:
-                    if block[1][0][0] == 'server_name':
-                        domain_names = block[1][0][1].split()
-                        [self.domains.append(d) for d in domain_names]
+                    for line in fh:
+                        match = pattern.findall(line)
+                        if match:
+                            domain_names = match[0].split()
+                            [self.domains.append(d.strip()) for d in domain_names[1:]]
                         
 
         except FileNotFoundError:
@@ -43,7 +45,8 @@ class SSLWatchParse:
             if old_domains[0] == 'www':
                 new_domains.append('.'.join(old_domains[1:]))
             else:
-                new_domains.append(d)
+                if len(d) > 0 and d != 'localhost':
+                    new_domains.append(d)
                 
 
         return list(set(new_domains))

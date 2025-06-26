@@ -12,8 +12,8 @@ import pysslwatchparse
 OPENSSL = "/usr/bin/openssl"
 warn = 30  #days
 critical = 10 #days
-debug_level = 1
-alert_email = "admin@boxcarpress.com"
+debug_level = 1 #0=nothing; >0 messages to STDOUT
+alert_email = "brian.pribis@boxcarpress.com"
 from_email = "ssl_alert@boxcarpress.com"
 
 def send_mail(msg_bundle):
@@ -40,16 +40,26 @@ def send_mail(msg_bundle):
         s.quit()
     
 def get_cert_info(host):
-    out = subprocess.check_output("echo | "+OPENSSL+" s_client -showcerts -servername "+host+" -connect "+host+":443 2>/dev/null | "+OPENSSL+" x509 -inform pem -noout -enddate -issuer", shell=True)
-    out = out.decode('utf-8')  
-    cert_dict = out.split('\n')
-    prog  = re.compile(r"(notAfter|issuer)=(.+)")
-    cert_info = {}
-    for i in cert_dict:
-        res = prog.match(i)
-        if res:
-            cert_info[res.group(1)] = res.group(2)
-    return cert_info
+    if debug_level > 0:
+        print("Checking " + host)
+        
+    cert_info = {}        
+    try:
+        out = subprocess.check_output("echo | "+OPENSSL+" s_client -showcerts -servername "+host+" -connect "+host+":443 2>/dev/null | "+OPENSSL+" x509 -inform pem -noout -enddate -issuer", shell=True)
+        out = out.decode('utf-8')  
+        cert_dict = out.split('\n')
+        prog  = re.compile(r"(notAfter|issuer)=(.+)")
+
+        for i in cert_dict:
+            res = prog.match(i)
+            if res:
+                cert_info[res.group(1)] = res.group(2)
+        return cert_info
+    except Exception as e:
+        if debug_level > 1:
+            print(f"EXCEPTION! = {e}")
+        log(f"Could not obtain cert info for {host}:{e} ")
+
 
 def check_date(cert_exp_date):
     """Return the number of days left before expiration"""
@@ -92,8 +102,6 @@ if __name__ == "__main__":
         main([sys.argv[1]])
     else:
         parse = pysslwatchparse.SSLWatchParse()
-        [print(a) for a in parse.getDomains()]
-
         domains = parse.getDomains()
         main(domains)
         
