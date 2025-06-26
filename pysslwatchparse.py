@@ -3,29 +3,30 @@ import os
 import glob
 import re
 
-file_path = '/etc/nginx/conf.d/bellastationery.com.conf'
 class SSLWatchParse:
     domains = []
-    #confLocDefault = '/etc/nginx/conf.d'
-    confLocDefault = '/Users/brian/tmp/certs'
-    #Go trough all conf files, grabbing up domains
-    #This assumes all domains are https.
-    #Pass the location of your confs.  Default is /etc/nginx/conf.d
-    def getDomains(self, ignore_confs):
+    conf_location = ''
+    ignore_confs = []
+    ignore_domains = []
+    
+    def __init__(conf_location, ignore_confs, ignore_domains):
+        pass
+
+    def getDomains():
         pattern = re.compile(r'\s*(server_name\s+.+)\s*;')
         try:
-            for f in os.listdir(self.confLocDefault):
+            for f in os.listdir(conf_location):
                 if f == '.' or f =='..':
                     continue
                 if f in ignore_confs:
                     continue
-                
-                with open(self.confLocDefault+'/'+f, 'r') as fh:
+
+                with open(conf_location+'/'+f, 'r') as fh:
                     for line in fh:
                         match = pattern.findall(line)
                         if match:
                             domain_names = match[0].split()
-                            [self.domains.append(d.strip()) for d in domain_names[1:]]
+                            [self.domains.append(d.strip()) for d in domain_names[1:] if d not in ignore_domains]
                         
 
         except FileNotFoundError as e:

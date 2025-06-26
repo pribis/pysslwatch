@@ -15,11 +15,16 @@ critical = 10 #days
 debug_level = 1 #0=nothing; >0 messages to STDOUT
 alert_email = "brian.pribis@boxcarpress.com"
 from_email = "ssl_alert@boxcarpress.com"
+
+conf_location = '/etc/nginx/conf.d'
 ignore_confs = [
-    'stage2.boxcarpress.us',
     'parked.conf',
-    'boxcarpress.us',
-    'harold.sugar.bxp.cc',
+    ]
+
+ignore_domains = [
+    'stage2.boxcarpress.us',
+    'ian.boxcarpress.us',
+    'brian.boxcarpress.us',
     ]
 
 def send_mail(msg_bundle):
@@ -107,7 +112,7 @@ if __name__ == "__main__":
     if len(sys.argv) > 1:
         main([sys.argv[1]])
     else:
-        parse = pysslwatchparse.SSLWatchParse()
-        domains = parse.getDomains(ignore_confs)
+        parse = pysslwatchparse.SSLWatchParse(conf_location, ignore_confs, ignore_domains)
+        domains = parse.getDomains()
         main(domains)
         
