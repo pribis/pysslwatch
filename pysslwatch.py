@@ -9,12 +9,13 @@ from datetime import timedelta
 from datetime import datetime
 import pysslwatchparse
 
-OPENSSL = "/usr/bin/openssl"
+OPENSSL = '/usr/bin/openssl'
 warn = 30  #days
 critical = 10 #days
 debug_level = 1 #0=nothing; >0 messages to STDOUT
-alert_email = "brian.pribis@boxcarpress.com"
-from_email = "ssl_alert@boxcarpress.com"
+log_file = '/var/log/pysslwatch.log'
+alert_email = 'brian.pribis@boxcarpress.com'
+from_email = 'ssl_alert@boxcarpress.com'
 
 conf_location = '/etc/nginx/conf.d'
 ignore_confs = [
@@ -30,19 +31,21 @@ ignore_domains = [
 def send_mail(msg_bundle):
     body = "Hey there!  Here's a report on your SSL certs.\n\n\n"
     for site in msg_bundle:
-        if msg_bundle[site]['level'] == "critical":
-            body +=  "CRITICAL!!! Site: "+site+" Issuer: "+msg_bundle[site]['issuer']+" has "+str(msg_bundle[site]['days_left'])+" days before certificate expires\n\n"
-        elif msg_bundle[site]['level'] == "warning":
-            body +=  "WARNING Site: "+site+" Issuer: "+msg_bundle[site]['issuer']+" has "+str(msg_bundle[site]['days_left'])+" days before certificate expires\n\n"
-        elif msg_bundle[site]['level'] == "" and debug_level > 0: #Send info anyway
-            body +=  "Site: "+site+" Issuer: "+msg_bundle[site]['issuer']+" has "+str(msg_bundle[site]['days_left'])+" days before certificate expires\n\n"
+        if msg_bundle[site]['level'] == 'critical':
+            body +=  'CRITICAL!!! Site: '+site+' Issuer: '+msg_bundle[site]['issuer']+' has '+str(msg_bundle[site]['days_left'])+' days before certificate expires\n\n'
+        elif msg_bundle[site]['level'] == 'warning':
+            body +=  'WARNING Site: '+site+' Issuer: '+msg_bundle[site]['issuer']+' has '+str(msg_bundle[site]['days_left'])+' days before certificate expires\n\n'
+        elif msg_bundle[site]['level'] == '' and debug_level > 0: #Send info anyway
+            body +=  'Site: '+site+' Issuer: '+msg_bundle[site]['issuer']+' has '+str(msg_bundle[site]['days_left'])+' days before certificate expires\n\n'
+        elif msg_bundle[site]['level'] == 'fatal_error':
+            body += 'Site: '+site+' Message: '+msg_bundle[site]['message']+'\n\n'
         else: 
             pass
-    body += "\n\nThanks!  IT Dept.\n\n\n"
+    body += '\n\nThanks!  IT Dept.\n\n\n'
     if debug_level > 1:
         print(body)
     else:
-        if debug_level > 0:          msg = MIMEText(body)
+        if debug_level > 0: msg = MIMEText(body)
         msg['Subject'] = "Boxcar SSL Certificate Report"
         msg['To'] = alert_email
         msg['From'] = from_email
@@ -56,7 +59,13 @@ def get_cert_info(host):
         
     cert_info = {}        
     try:
-        out = subprocess.check_output("echo | "+OPENSSL+" s_client -showcerts -servername "+host+" -connect "+host+":443 2>/dev/null | "+OPENSSL+" x509 -inform pem -noout -enddate -issuer", shell=True)
+
+        cmd = (
+            f"echo | {OPENSSL} s_client -showcerts -servername {host} -connect {host}:443 2>/dev/null | "
+            f"{OPENSSL} x509 -inform pem -noout -enddate -issuer"
+        )
+        out = subprocess.check_output(cmd, shell=True)
+
         out = out.decode('utf-8')  
         cert_dict = out.split('\n')
         prog  = re.compile(r"(notAfter|issuer)=(.+)")
@@ -65,10 +74,14 @@ def get_cert_info(host):
             res = prog.match(i)
             if res:
                 cert_info[res.group(1)] = res.group(2)
-        return cert_info
+
+        if not cert_info:
+            return None
+        else:
+            return cert_info
     except Exception as e:
         if debug_level > 1:
-            print(f"EXCEPTION! = {e}")
+            print(f'{e}')
         log(f"Could not obtain cert info for {host}:{e} ")
 
 
@@ -79,7 +92,9 @@ def check_date(cert_exp_date):
     return  abs((right_then - right_now).days)
 
 def log(msg):
-    pass
+    with open(log_file, 'a') as fh:
+        fh.write(msg+'\n')
+
 
 def main(sites):
     mail_msg = {}
@@ -87,12 +102,25 @@ def main(sites):
 
     for site in sites:
         c_info =  get_cert_info(site)
+
+        if not c_info:
+            if debug_level > 0:
+                print(f'{site} Could not obtain cert info.')
+            log(f'{site} Could not obtain cert info.')
+            mail_msg[site] = {
+                'level': 'fatal_error',
+                'message': 'Could not obtain cert info',
+                'days_left': 0,
+                'exp_date': 0,
+                'issuer': 'Unknown'
+            }
+            continue
         days_left = check_date(c_info['notAfter'])
         if days_left < critical:
             level = "critical"
         elif days_left < warn:
             level = "warning"
-        elif debug_level > 0:
+        elif debug_level > 1:
             level = ""
             log("Site: "+site+" Issuer: "+c_info['issuer']+" has "+str(days_left)+" days before certificate expires")
         else:
@@ -102,7 +130,8 @@ def main(sites):
             'days_left':days_left,
             'level': level,
             'issuer': c_info['issuer'],
-            'exp_date':c_info['notAfter']
+            'exp_date':c_info['notAfter'],
+            'message': ''
         }
 
     if len(mail_msg) > 0:
@@ -113,6 +142,12 @@ if __name__ == "__main__":
         main([sys.argv[1]])
     else:
         parse = pysslwatchparse.SSLWatchParse(conf_location, ignore_confs, ignore_domains)
-        domains = parse.getDomains()
+        try:
+            domains = parse.getDomains()
+        except Execption as e:
+            if debug_level > 1:
+                print(e)
+            log(e)
+            
         main(domains)
         

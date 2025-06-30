@@ -9,30 +9,29 @@ class SSLWatchParse:
     ignore_confs = []
     ignore_domains = []
     
-    def __init__(conf_location, ignore_confs, ignore_domains):
-        pass
+    def __init__(self, conf_location, ignore_confs, ignore_domains):
+        self.conf_location = conf_location
+        self.ignore_confs = ignore_confs
+        self.ignore_domains = ignore_domains
 
-    def getDomains():
+
+    def getDomains(self):
         pattern = re.compile(r'\s*(server_name\s+.+)\s*;')
-        try:
-            for f in os.listdir(conf_location):
-                if f == '.' or f =='..':
-                    continue
-                if f in ignore_confs:
-                    continue
 
-                with open(conf_location+'/'+f, 'r') as fh:
-                    for line in fh:
-                        match = pattern.findall(line)
-                        if match:
-                            domain_names = match[0].split()
-                            [self.domains.append(d.strip()) for d in domain_names[1:] if d not in ignore_domains]
-                        
+        for f in os.listdir(self.conf_location):
+            if f == '.' or f =='..':
+                continue
+            if f in self.ignore_confs:
+                continue
 
-        except FileNotFoundError as e:
-            print(f"Error: File not found at {e}")
-        except Exception as e:
-            print(f"An error occurred: {e}")
+            with open(self.conf_location+'/'+f, 'r') as fh:
+                for line in fh:
+                    match = pattern.findall(line)
+                    if match:
+                        domain_names = match[0].split()
+                        [self.domains.append(d.strip()) for d in domain_names[1:] if d not in self.ignore_domains]
+
+
 
             
         return self.cleanup(self.domains, True)
