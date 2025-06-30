@@ -1,4 +1,3 @@
-import nginxparser_eb
 import os
 import glob
 import re

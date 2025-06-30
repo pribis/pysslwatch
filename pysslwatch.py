@@ -30,10 +30,11 @@ debug_level = 1 #0=nothing; >0 messages to STDOUT
 log_file = '/var/log/pysslwatch.log'
 alert_email = '<Email address to send reports to>'
 from_email = '<Your from email address>'
-conf_location = 'certs'
+conf_location = '/etc/nginx/conf.d'
 
 ignore_confs = [
     'parked.conf',
+    'auth'
     ]
 
 ignore_domains = [
