@@ -26,11 +26,11 @@ import os
 OPENSSL = '/usr/bin/openssl'
 warn = 30  #days
 critical = 10 #days
-debug_level = 0 #0=nothing; >0 messages to STDOUT
+debug_level = 1 #0=nothing; >0 messages to STDOUT
 log_file = '/var/log/pysslwatch.log'
 alert_email = '<Email address to send reports to>'
 from_email = '<Your from email address>'
-conf_location = '/etc/nginx/conf.d'
+conf_location = 'certs'
 
 ignore_confs = [
     'parked.conf',
@@ -177,7 +177,7 @@ if __name__ == "__main__":
         parse = pysslwatchparse.SSLWatchParse(conf_location, ignore_confs, ignore_domains)
         try:
             domains = parse.getDomains()
-        except Execption as e:
+        except Exception as e:
             log(e)
             
         main(domains)
