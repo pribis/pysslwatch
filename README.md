@@ -1,6 +1,6 @@
-#pysslwatch#
+# pysslwatch
 
-##Watch SSL certs and report results, highlighting expiration concerns.##
+## Watch SSL certs and report results, highlighting expiration concerns.
 
 pysslwatch goes through the server conf files and extracts all the domains
 and checks the certificate expiration status. It will highlight any
