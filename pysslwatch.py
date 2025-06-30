@@ -8,25 +8,39 @@ from email.mime.text import MIMEText
 from datetime import timedelta
 from datetime import datetime
 import pysslwatchparse
+import os
+
+
+############################################################
+# Configure the following.
+#
+# Make sure to set your alert/from email addresses
+# or you'll never get any messages sent to you.
+#
+# You can also define environmental variables:
+# SSLWATCH_ALERT_EMAIL
+# SSLWATCH_FROM_EMAIL
+#
+
 
 OPENSSL = '/usr/bin/openssl'
 warn = 30  #days
 critical = 10 #days
 debug_level = 1 #0=nothing; >0 messages to STDOUT
 log_file = '/var/log/pysslwatch.log'
-alert_email = 'brian.pribis@boxcarpress.com'
-from_email = 'ssl_alert@boxcarpress.com'
-
+alert_email = '<Email address to send reports to>'
+from_email = '<Your from email address>'
 conf_location = '/etc/nginx/conf.d'
+
 ignore_confs = [
     'parked.conf',
     ]
 
 ignore_domains = [
-    'stage2.boxcarpress.us',
-    'ian.boxcarpress.us',
-    'brian.boxcarpress.us',
     ]
+
+
+###########No touchy########
 
 def send_mail(msg_bundle):
     body = "Hey there!  Here's a report on your SSL certs.\n\n\n"
@@ -138,6 +152,22 @@ def main(sites):
         send_mail(mail_msg)
 
 if __name__ == "__main__":
+
+    #Make sure defaults are set up correctly.
+    if 'PYSSLWATCH_ALERT_EMAIL' in os.environ:
+        a_email = os.environ['PYSSLWATCH_ALERT_EMAIL']
+        if a_email != None:
+            alert_email = a_email
+
+    if 'PYSSLWATCH_FROM_EMAIL' in os.environ:
+        f_email = os.environ['PYSSLWATCH_FROM_EMAIL']
+        if f_email != None:
+            from_email = f_email    
+
+    if conf_location == '':
+        print('NGINX configuration file location not defined.')
+        exit(1)
+
     if len(sys.argv) > 1:
         main([sys.argv[1]])
     else:
