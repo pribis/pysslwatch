@@ -26,7 +26,7 @@ import os
 OPENSSL = '/usr/bin/openssl'
 warn = 30  #days
 critical = 10 #days
-debug_level = 1 #0=nothing; >0 messages to STDOUT
+debug_level = 0 #0=nothing; >0 messages to STDOUT
 log_file = '/var/log/pysslwatch.log'
 alert_email = '<Email address to send reports to>'
 from_email = '<Your from email address>'
@@ -49,17 +49,17 @@ def send_mail(msg_bundle):
             body +=  'CRITICAL!!! Site: '+site+' Issuer: '+msg_bundle[site]['issuer']+' has '+str(msg_bundle[site]['days_left'])+' days before certificate expires\n\n'
         elif msg_bundle[site]['level'] == 'warning':
             body +=  'WARNING Site: '+site+' Issuer: '+msg_bundle[site]['issuer']+' has '+str(msg_bundle[site]['days_left'])+' days before certificate expires\n\n'
-        elif msg_bundle[site]['level'] == '' and debug_level > 0: #Send info anyway
+        elif msg_bundle[site]['level'] == '':
             body +=  'Site: '+site+' Issuer: '+msg_bundle[site]['issuer']+' has '+str(msg_bundle[site]['days_left'])+' days before certificate expires\n\n'
         elif msg_bundle[site]['level'] == 'fatal_error':
             body += 'Site: '+site+' Message: '+msg_bundle[site]['message']+'\n\n'
-        else: 
-            pass
+        else:
+            log('Something went horribly wrong.')
     body += '\n\nThanks!  IT Dept.\n\n\n'
-    if debug_level > 1:
+    if debug_level > 1: #Don't send
         print(body)
     else:
-        if debug_level > 0: msg = MIMEText(body)
+        msg = MIMEText(body)
         msg['Subject'] = "Boxcar SSL Certificate Report"
         msg['To'] = alert_email
         msg['From'] = from_email
@@ -109,6 +109,9 @@ def log(msg):
     with open(log_file, 'a') as fh:
         fh.write(msg+'\n')
 
+    if debug_level > 1:
+        print(msg+'\n')
+
 
 def main(sites):
     mail_msg = {}
@@ -118,9 +121,9 @@ def main(sites):
         c_info =  get_cert_info(site)
 
         if not c_info:
-            if debug_level > 0:
-                print(f'{site} Could not obtain cert info.')
+            
             log(f'{site} Could not obtain cert info.')
+            
             mail_msg[site] = {
                 'level': 'fatal_error',
                 'message': 'Could not obtain cert info',
@@ -129,16 +132,16 @@ def main(sites):
                 'issuer': 'Unknown'
             }
             continue
+
+
         days_left = check_date(c_info['notAfter'])
         if days_left < critical:
             level = "critical"
         elif days_left < warn:
             level = "warning"
-        elif debug_level > 1:
-            level = ""
+
+        if debug_level > 0:
             log("Site: "+site+" Issuer: "+c_info['issuer']+" has "+str(days_left)+" days before certificate expires")
-        else:
-            continue 
 
         mail_msg[site] = {
             'days_left':days_left,
@@ -175,8 +178,6 @@ if __name__ == "__main__":
         try:
             domains = parse.getDomains()
         except Execption as e:
-            if debug_level > 1:
-                print(e)
             log(e)
             
         main(domains)
