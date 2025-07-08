@@ -1,0 +1,19 @@
+defaults:
+  notify_email: to@example.com
+  from_email: from@example.com
+  subject: 'SSL Report'
+  debug: 0
+
+system:
+  log_file: 'pysslwatch.log'
+  conf_location: '/etc/nginx/conf.d'
+  server: 'nginx'
+  openssl: '/usr/bin/openssl'
+
+ignore:
+  confs:
+    - example1.conf
+    - example2.conf
+  domains:
+    - example1.com
+    - example2.net

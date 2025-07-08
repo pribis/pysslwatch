@@ -9,7 +9,7 @@ from datetime import timedelta
 from datetime import datetime
 import pysslwatchparse
 import os
-
+import yaml
 
 ############################################################
 # Configure the following.
@@ -18,23 +18,22 @@ import os
 # or you'll never get any messages sent to you.
 #
 # You can also define environmental variables:
-# SSLWATCH_ALERT_EMAIL
+# SSLWATCH_NOTIFY_EMAIL
 # SSLWATCH_FROM_EMAIL
 #
 
 
-OPENSSL = '/usr/bin/openssl'
+openssl = '/usr/bin/openssl'
 warn = 30  #days
 critical = 10 #days
 debug_level = 1 #0=nothing; >0 messages to STDOUT
 log_file = '/var/log/pysslwatch.log'
-alert_email = '<Email address to send reports to>'
+notify_email = '<Email address to send reports to>'
 from_email = '<Your from email address>'
+subject = '[SUBJECT LINE] Your SSL report'
 conf_location = '/etc/nginx/conf.d'
 
 ignore_confs = [
-    'parked.conf',
-    'auth'
     ]
 
 ignore_domains = [
@@ -61,11 +60,11 @@ def send_mail(msg_bundle):
         print(body)
     else:
         msg = MIMEText(body)
-        msg['Subject'] = "Boxcar SSL Certificate Report"
-        msg['To'] = alert_email
+        msg['Subject'] = subject
+        msg['To'] = notify_email
         msg['From'] = from_email
         s = smtplib.SMTP('localhost')
-        s.sendmail(from_email, [alert_email], msg.as_string())
+        s.sendmail(from_email, [notify_email], msg.as_string())
         s.quit()
     
 def get_cert_info(host):
@@ -76,8 +75,8 @@ def get_cert_info(host):
     try:
 
         cmd = (
-            f"echo | {OPENSSL} s_client -showcerts -servername {host} -connect {host}:443 2>/dev/null | "
-            f"{OPENSSL} x509 -inform pem -noout -enddate -issuer"
+            f"echo | {openssl} s_client -showcerts -servername {host} -connect {host}:443 2>/dev/null | "
+            f"{openssl} x509 -inform pem -noout -enddate -issuer"
         )
         out = subprocess.check_output(cmd, shell=True)
 
@@ -155,19 +154,83 @@ def main(sites):
     if len(mail_msg) > 0:
         send_mail(mail_msg)
 
+
+def config():
+    with open('config.yml', 'r') as fh:
+        global notify_email
+        global from_email
+        global subject
+        global debug_level
+        global openssl
+        global conf_location
+        global log_file
+        global ignore_confs
+        global ignore_domains
+        
+        config = yaml.safe_load(fh)
+        if 'defaults' in config:
+            print("Found defaults.")
+            if 'notify_email' in config['defaults']:
+                notify_email = config['defaults']['notify_email']
+            if 'from_email' in config['defaults']:
+                from_email = config['defaults']['from_email']
+            if 'subject' in config['defaults']:
+                subject = config['defaults']['subject']
+            if 'debug' in config['defaults']:
+                debug_level = config['defaults']['debug']
+
+            if 'system' in config:
+                if 'openssl' in config['system']:
+                    openssl = config['system']['openssl']
+                if 'conf_location' in config['system']:
+                    conf_location = config['system']['conf_location']
+                if 'log_file' in config['system']:
+                    log_file = config['system']['log_file']
+
+            if 'ignore' in config:
+                if 'domains' in config['ignore']:
+                    ignore_domains = config['ignore']['domains']
+                if 'confs' in config['ignore']:
+                    ignore_confs = config['ignore']['confs']
+
+def test():
+    print('Configuration settings:')
+    print('-----------------------')
+    print('DEFAULTS')
+    print(f'Notify email: {notify_email}')
+    print(f'From email: {from_email}')
+    print(f'Subject: {subject}')
+    print(f'Debug level: {debug_level}')
+    print('\n')
+    print("System settings:")
+    
+    print(f'Open ssl bin directory (Default /usr/bin/openssl): {openssl}')
+    print(f'Webserver conf location (Default /etc/nginx/conf.d): {conf_location}')
+    print(f'Log file location (Default /var/www/pysslwatch.log): {log_file}')
+    print('\n')
+    print('IGNORE LISTS')
+    print(f'Domains to ignore: {ignore_domains}')
+    print(f'Confs to ignore: {ignore_confs}')
+
+
+    print('--------END---------')
+                
 if __name__ == "__main__":
 
     #Make sure defaults are set up correctly.
-    if 'PYSSLWATCH_ALERT_EMAIL' in os.environ:
-        a_email = os.environ['PYSSLWATCH_ALERT_EMAIL']
+    if 'PYSSLWATCH_NOTIFY_EMAIL' in os.environ:
+        a_email = os.environ['PYSSLWATCH_NOTIFY_EMAIL']
         if a_email != None:
-            alert_email = a_email
+            notify_email = a_email
 
     if 'PYSSLWATCH_FROM_EMAIL' in os.environ:
         f_email = os.environ['PYSSLWATCH_FROM_EMAIL']
         if f_email != None:
             from_email = f_email    
 
+    #Now we load configs and override anything we just got if we can:
+    config()
+            
     if conf_location == '':
         print('NGINX configuration file location not defined.')
         exit(1)
