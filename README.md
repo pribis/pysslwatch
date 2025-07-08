@@ -47,10 +47,10 @@ sure you run pysslwatch as that user or else set the variables in the cron scrip
 included that capability for testing purposes, but it is there should you choose to use it.
 
 
-
+### License
 This script is free to use in anyway you see fit. Consider it licensed under the GNU GPL (v3).
 I **do not** take responsibility for anything bad that might happen running this program.
 **Use at your own risk**.  As with any script you run on your system, read through the code
-and understand what is going on. The code isn't that long and should be easy to understand
-by anyone familiar with Python. Even a noob should be able to figure it out.
+and understand what it is doing. The code isn't that long and should be easy to understand
+by anyone familiar with Python.
 
