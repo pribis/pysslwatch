@@ -114,6 +114,9 @@ def log(msg):
 
 
 def main(sites):
+    global warn
+    global critical
+    
     mail_msg = {}
     level = ""
 
@@ -166,6 +169,8 @@ def config():
         global log_file
         global ignore_confs
         global ignore_domains
+        global warn
+        global critical
         
         config = yaml.safe_load(fh)
         if 'defaults' in config:
@@ -179,6 +184,11 @@ def config():
             if 'debug' in config['defaults']:
                 debug_level = config['defaults']['debug']
 
+            if 'warn' in config['defaults']:
+                warn = config['defaults']['warn']
+            if 'critical' in config['defaults']:
+                critical = config['defaults']['critical']
+                
             if 'system' in config:
                 if 'openssl' in config['system']:
                     openssl = config['system']['openssl']
