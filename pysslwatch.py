@@ -146,8 +146,8 @@ def main(sites):
         if debug_level > 0:
             log("Site: "+site+" Issuer: "+c_info['issuer']+" has "+str(days_left)+" days before certificate expires")
 
-
-        if level != '':
+        #Send only warning/critical
+        if debug_level < 1 and level != '':
             mail_msg[site] = {
                 'days_left':days_left,
                 'level': level,
@@ -155,6 +155,16 @@ def main(sites):
                 'exp_date':c_info['notAfter'],
                 'message': ''
             }
+        elif debug_level == 1: #Send everything
+            mail_msg[site] = {
+                'days_left':days_left,
+                'level': level,
+                'issuer': c_info['issuer'],
+                'exp_date':c_info['notAfter'],
+                'message': ''
+            }
+
+                        
         level = ''
     if len(mail_msg) > 0:
         send_mail(mail_msg)
