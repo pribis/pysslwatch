@@ -118,7 +118,7 @@ def main(sites):
     global critical
     
     mail_msg = {}
-    level = ""
+    level = ''
 
     for site in sites:
         c_info =  get_cert_info(site)
@@ -146,14 +146,16 @@ def main(sites):
         if debug_level > 0:
             log("Site: "+site+" Issuer: "+c_info['issuer']+" has "+str(days_left)+" days before certificate expires")
 
-        mail_msg[site] = {
-            'days_left':days_left,
-            'level': level,
-            'issuer': c_info['issuer'],
-            'exp_date':c_info['notAfter'],
-            'message': ''
-        }
 
+        if level != '':
+            mail_msg[site] = {
+                'days_left':days_left,
+                'level': level,
+                'issuer': c_info['issuer'],
+                'exp_date':c_info['notAfter'],
+                'message': ''
+            }
+        level = ''
     if len(mail_msg) > 0:
         send_mail(mail_msg)
 
