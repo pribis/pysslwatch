@@ -3,20 +3,20 @@
 ## Watch SSL certs and report results, highlighting expiration concerns.
 
 pysslwatch goes through the server conf files and extracts all the domains
-and checks the certificate expiration status. It will highlight any
-pending expiration.
+and checks the certificate expiration status. It will inform you of any
+pending expirations by giving you a WARNING or CRITICAL notification.
 
 **[Note: only Nginx is supported at this time.]**
 
 ### Config
 The script itself contains a nominal amount of default configuration, but it is
-not complete and the script will fail. You may edit these values at the head of 
-the script, but this isn't the recommended way.
+not complete and the script will fail if you don't set up the config.yml file correctly. 
+You may edit these values at the head of the script, but this isn't the recommended way.
 
 Instead, use the config.yml.example file. First rename it to config.yml and then
 edit it for your particular needs. You may want to set debug=2, which will print
 info but not email the results. debug=1 will print results and email. debug=0 will
-not print any results except where the system call to openssl is concerned. 
+not print any results except where the system call to openssl fails. 
 
 The configuration falls through this way:
 1. config.yml (overrides all values)
@@ -28,6 +28,14 @@ PYSSLWATCH_NOTIFY_EMAIL
 PYSSLWATCH_FROM_EMAIL
 
 As already mentioned, these will be overridden by the config.yml.
+
+Most of the configuration file is self-explanatory, but a couple of
+items are worth mentioning.
+
+warn: the number of days within which you should be warned of pending expiration. 
+critical: Like warn but now you *really* ought to do something soon.
+ignore: confs will ignore an entire configuration file. domains will ignore a single
+domain. You may use either/both or neither. 
 
 ### Usage
 The way I use it is to put the contents of the pysslwatch folder somewhere and then
