@@ -171,7 +171,7 @@ def main(sites):
 
 
 def config():
-    with open('config.yml', 'r') as fh:
+    with open('config.yaml', 'r') as fh:
         global notify_email
         global from_email
         global subject

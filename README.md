@@ -10,16 +10,16 @@ pending expirations by giving you a WARNING or CRITICAL notification.
 
 ### Config
 The script itself contains a nominal amount of default configuration, but it is
-not complete and the script will fail if you don't set up the config.yml file correctly. 
+not complete and the script will fail if you don't set up the config.yaml file correctly. 
 You may edit these values at the head of the script, but this isn't the recommended way.
 
-Instead, use the config.yml.example file. First rename it to config.yml and then
+Instead, use the config.yaml.example file. First rename it to config.yaml and then
 edit it for your particular needs. You may want to set debug=2, which will print
 info but not email the results. debug=1 will print results and email. debug=0 will
 not print any results except where the system call to openssl fails. 
 
 The configuration falls through this way:
-1. config.yml (overrides all values)
+1. config.yaml (overrides all values)
 2. environmental variables (overrides defaults)
 3. defaults 
 
@@ -27,15 +27,18 @@ The two environmental variables you can set are:
 PYSSLWATCH_NOTIFY_EMAIL
 PYSSLWATCH_FROM_EMAIL
 
-As already mentioned, these will be overridden by the config.yml.
+As already mentioned, these will be overridden by the config.yaml.
 
 Most of the configuration file is self-explanatory, but a couple of
 items are worth mentioning.
 
-warn: the number of days within which you should be warned of pending expiration. 
-critical: Like warn but now you *really* ought to do something soon.
-ignore: confs will ignore an entire configuration file. domains will ignore a single
-domain. You may use either/both or neither. 
+- debug. 0 will not print anything and will only send warning/critical. 
+1 will print info AND send all of the checks. > 1 will print but send nothng.
+- warn: the number of days within which you should be warned of pending expiration. 
+- critical: Like warn but now you *really* ought to do something soon.
+-  ignore: 
+   - confs will ignore an entire configuration file. 
+   - domains will ignore a single domain. You may use either/both or neither. 
 
 ### Usage
 The way I use it is to put the contents of the pysslwatch folder somewhere and then
@@ -47,7 +50,7 @@ The program assumes your conf files contain only server_names listening on port 
 The program will try and fail gracefully where it can.
 
 Information will be logged to /var/log/pysslwatch.log (Or wherever you set this in
-the config.yml file). The logging level can be changed for the program, but it will 
+the config.yaml file). The logging level can be changed for the program, but it will 
 always log to that file regardless. 
 
 If you choose to set environmental variables for the email settings you will need to make
