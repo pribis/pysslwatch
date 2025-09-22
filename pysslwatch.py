@@ -7,6 +7,7 @@ import smtplib
 from email.mime.text import MIMEText
 from datetime import timedelta
 from datetime import datetime
+from subprocess import Popen, PIPE
 import pysslwatchparse
 import os
 import yaml
