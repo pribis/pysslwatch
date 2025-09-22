@@ -67,8 +67,7 @@ def send_mail(msg_bundle):
         msg['From'] = from_email
         p = Popen([sendmail,'-t','-oi'], stdin=PIPE, universal_newlines=True)
         p.communicate(msg.as_string())
-        
-       
+        #print(p.returncode)
     
 def get_cert_info(host):
     if debug_level > 0:
