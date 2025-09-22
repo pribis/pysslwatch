@@ -24,6 +24,7 @@ import yaml
 
 
 openssl = '/usr/bin/openssl'
+sendmail = '/usr/sbin/sendmail'
 warn = 30  #days
 critical = 10 #days
 debug_level = 1 #0=nothing; >0 messages to STDOUT
@@ -63,9 +64,10 @@ def send_mail(msg_bundle):
         msg['Subject'] = subject
         msg['To'] = notify_email
         msg['From'] = from_email
-        s = smtplib.SMTP('localhost')
-        s.sendmail(from_email, [notify_email], msg.as_string())
-        s.quit()
+        p = Popen([sendmail,'-t','-oi'], stdin=PIPE, universal_newlines=True)
+        p.communicate(msg.as_string())
+        
+       
     
 def get_cert_info(host):
     if debug_level > 0:
@@ -208,6 +210,9 @@ def config():
                     conf_location = config['system']['conf_location']
                 if 'log_file' in config['system']:
                     log_file = config['system']['log_file']
+                if 'sendmail' in config['system']:
+                    sendmail = config['system']['sendmail']
+                
 
             if 'ignore' in config:
                 if 'domains' in config['ignore']:
